@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Stats - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #1e40af;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        
+        .ranking {
+            list-style: none;
+        }
+        
+        .ranking li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ranking li:last-child {
+            border-bottom: none;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            color: #1e40af;
+        }
+        
+        .stat-value {
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .rank-position {
+            background: #1e40af;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .rank-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .refresh-btn {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #1e3a8a;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .player-stats {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            background: #f3f4f6;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value-big {
+            font-size: 1.5em;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background: #efe;
+            color: #060;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stat-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ MINECRAFT STATS</h1>
+            <p>Statystyki serwera i rankingu graczy</p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="refresh-btn" onclick="loadAllData()">🔄 Odśwież dane</button>
+        </div>
+        
+        <div id="error" class="error" style="display:none;"></div>
+        <div id="success" class="success" style="display:none;"></div>
+        
+        <!-- Wyszukiwanie gracza -->
+        <div class="search-box">
+            <input type="text" id="playerSearch" placeholder="Wyszukaj gracza..." onkeyup="searchPlayer()">
+            <div id="playerResults" style="margin-top: 10px;"></div>
+        </div>
+        
+        <!-- Statystyki gracza -->
+        <div id="playerStatsContainer"></div>
+        
+        <!-- Rankingu -->
+        <div class="stats-grid">
+            <div class="card">
+                <h2>💀 TOP 10 - ŚMIERCI</h2>
+                <ul class="ranking" id="topDeaths"></ul>
+            </div>
+            
+            <div class="card">
+                <h2>⚔️ TOP 10 - ZABÓJCY</h2>
+                <ul class="ranking" id="topKillers"></ul>
+            </div>
+            
+            <div class="card">
+                <h2>⏱️ TOP 10 - CZAS GRY</h2>
+                <ul class="ranking" id="topPlaytime"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://twoja-domena.com/api/stats.php';
+        
+        // Pokaż komunikat
+        function showMessage(message, type = 'success') {
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            
+            if (type === 'error') {
+                errorDiv.textContent = '❌ ' + message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            } else {
+                successDiv.textContent = '✅ ' + message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+            
+            setTimeout(() => {
+                if (type === 'error') errorDiv.style.display = 'none';
+                else successDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Załaduj wszystkie dane
+        async function loadAllData() {
+            // W rzeczywistym projekcie będzie to pobierać z bazy danych PHP
+            showMessage('Dane odświeżone');
+        }
+        
+        // Wyszukaj gracza
+        async function searchPlayer() {
+            const query = document.getElementById('playerSearch').value;
+            
+            if (query.length < 2) {
+                document.getElementById('playerResults').innerHTML = '';
+                return;
+            }
+            
+            // W rzeczywistym projekcie będzie to zapytanie do API
+            document.getElementById('playerResults').innerHTML = 
+                `<p style="color: white;">Szukam gracza: ${query}...</p>`;
+        }
+        
+        // Załaduj stronę
+        window.onload = function() {
+            loadAllData();
+        };
+    </script>
+</body>
+</html>
