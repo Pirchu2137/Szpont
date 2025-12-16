@@ -13,7 +13,7 @@ class MinecraftStatsPlugin {
     private $dbConfig = [
         'host' => 's6.crafthost.pl',
         'user' => 'root',
-        'password' => 'Kasztelan1',  // Zmień na rzeczywiste hasło
+        'password' => 'Kasztelan1', 
         'database' => 'svr102872',
         'port' => 3306
     ];
@@ -602,3 +602,4 @@ class MinecraftStatsPlugin {
 }
 
 ?>
+
